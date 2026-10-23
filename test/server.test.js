@@ -41,3 +41,29 @@ test("write requests are rejected", async () => {
   assert.equal(response.status, 405);
   assert.equal(response.headers.get("allow"), "GET");
 });
+
+test("open filtering preserves order, count and the unfiltered list", async () => {
+  const response = await fetch(`${base}/api/tasks?status=open`);
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(Object.keys(body).sort(), ["count", "items"]);
+  assert.deepEqual(body.items.map(task => task.id), [1, 3]);
+  assert.ok(body.items.every(task => task.status === "open"));
+  assert.equal(body.count, 2);
+  const all = await (await fetch(`${base}/api/tasks`)).json();
+  assert.deepEqual(all.items.map(task => task.id), [1, 2, 3, 4]);
+  assert.equal(all.count, 4);
+});
+
+for (const query of [
+  "status=", "status=done", "status=OPEN", "status=unknown",
+  "status=open&status=open", "status=&status=open", "status=open&status=",
+]) {
+  test(`invalid filter returns 400: ${query}`, async () => {
+    const response = await fetch(`${base}/api/tasks?${query}`);
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: "Use exactly one status=open parameter",
+    });
+  });
+}

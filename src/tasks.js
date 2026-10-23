@@ -5,6 +5,11 @@ const tasks = [
   { id: 4, title: "Check the setup", status: "done" },
 ];
 
-export function selectTasks() {
-  return tasks;
+export function selectTasks(params) {
+  const statuses = params.getAll("status");
+  if (statuses.length === 0) return tasks;
+  if (statuses.length !== 1 || statuses[0] !== "open") {
+    throw new RangeError("Use exactly one status=open parameter");
+  }
+  return tasks.filter(task => task.status === "open");
 }
