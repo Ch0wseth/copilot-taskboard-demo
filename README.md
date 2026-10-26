@@ -18,6 +18,20 @@ The repository has two useful reference points:
 The completed branch is a reference, not proof that Copilot produced the change
 during your replay. Keep your replay on a separate branch.
 
+## Contents
+
+* [Prerequisites](#prerequisites)
+* [Get the repository](#get-the-repository)
+* [Run the baseline](#run-the-baseline)
+* [Replay the change with Copilot](#replay-the-change-with-copilot)
+  * [Inspect and plan without editing](#1-inspect-and-plan-without-editing)
+  * [Add tests first and capture the red result](#2-add-tests-first-and-capture-the-red-result)
+  * [Implement the smallest change](#3-implement-the-smallest-change)
+  * [Review the diff](#4-review-the-diff)
+  * [Check the UI in a browser](#5-check-the-ui-in-a-browser)
+* [Compare with the completed reference](#compare-with-the-completed-reference)
+* [Scope and troubleshooting](#scope-and-troubleshooting)
+
 ## Prerequisites
 
 * Git
