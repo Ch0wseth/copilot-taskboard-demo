@@ -158,12 +158,12 @@ Review the tests and the red output before continuing.
 After approving the tests, paste:
 
 ```text
-Implement the approved open-task filter in src/tasks.js, src/server.js, and
-public/app.js, editing only the files needed. Accept no status parameter as
-the original four-task list; accept exactly one status=open and return only
+Implement the approved open-task filter in src/tasks.js, src/server.js,
+public/app.js, and public/index.html, editing only the files needed. Accept no
+status parameter as the original four-task list; accept exactly one status=open and return only
 open tasks; return a structured 400 for blank, unknown, uppercase, or repeated
 status values. Preserve the { items, count } envelope and task order. In the UI,
-use the existing native button with aria-pressed, show the response count,
+add an "Open only" native button with aria-pressed, show the response count,
 expose request errors, and allow the user to retry. Do not add dependencies,
 authentication, persistence, or unrelated features. Run npm test and stop for
 my review.
@@ -218,7 +218,7 @@ From the replay checkout, compare the two published branches:
 
 ```bash
 git fetch origin
-git diff origin/main...origin/feature/open-filter
+git diff origin/main origin/feature/open-filter
 ```
 
 To run the completed reference without switching branches or disturbing your
