@@ -23,6 +23,7 @@ during your replay. Keep your replay on a separate branch.
 * [Prerequisites](#prerequisites)
 * [Get the repository](#get-the-repository)
 * [Run the baseline](#run-the-baseline)
+* [Choose VS Code Agent or Copilot CLI](#choose-vs-code-agent-or-copilot-cli)
 * [Replay the change with Copilot](#replay-the-change-with-copilot)
   * [Inspect and plan without editing](#1-inspect-and-plan-without-editing)
   * [Add tests first and capture the red result](#2-add-tests-first-and-capture-the-red-result)
@@ -30,6 +31,7 @@ during your replay. Keep your replay on a separate branch.
   * [Review the diff](#4-review-the-diff)
   * [Check the UI in a browser](#5-check-the-ui-in-a-browser)
 * [Compare with the completed reference](#compare-with-the-completed-reference)
+* [Optional continuous live-demo prompt](#optional-continuous-live-demo-prompt)
 * [Scope and troubleshooting](#scope-and-troubleshooting)
 
 ## Prerequisites
@@ -37,11 +39,13 @@ during your replay. Keep your replay on a separate branch.
 * Git
 * Node.js 22 or later, with npm
 * A browser
-* A GitHub Copilot-enabled IDE is optional. You can run and inspect the completed
-  app without Copilot.
+* To replay the agent workflow: VS Code with GitHub Copilot Chat, or GitHub
+  Copilot CLI, signed in with an account that has access to Copilot.
+* Copilot is not required to run and inspect the completed app.
 
 The app has no runtime dependencies. No database, API key, account, or
-environment setup is needed.
+environment setup is needed to run the app. Copilot itself requires sign-in
+and may consume AI credits according to your account and model selection.
 
 ## Get the repository
 
@@ -113,6 +117,69 @@ Then open <http://127.0.0.1:3001>. The server has no hot reload. After editing
 backend files, stop it with `Ctrl+C` and run `npm start` again before checking
 the change in the browser.
 
+## Choose VS Code Agent or Copilot CLI
+
+The demonstration is about **Copilot doing the engineering work**, not just
+clicking a finished application. Keep the conversation, tool calls, changes,
+and test results visible. The browser journey is the final verification step.
+
+### VS Code Agent
+
+From your baseline replay checkout:
+
+```bash
+code .
+```
+
+Open Copilot Chat, select **Agent**, and attach
+`docs/feature-request.md` and `.github/copilot-instructions.md` as context.
+Paste the phase prompts below one at a time. Inspect the proposed plan before
+asking for tests or implementation. Expand tool results to show the actual
+file reads, edits, commands, and test output.
+
+Accept workspace trust only for a checkout you recognize. Review permission
+requests rather than enabling unrestricted access for the demonstration.
+If Copilot needs sign-in or entitlement activation, complete it in the IDE;
+opening Chat alone does not prove the agent has started working.
+
+### Copilot CLI
+
+From your baseline replay checkout:
+
+```bash
+copilot
+```
+
+Paste the same phase prompts into the interactive terminal session. Review
+the plan, tool approvals, edits, and actual test output as you proceed.
+Use `/diff` to inspect changes in the CLI, or `git diff` in another terminal.
+Do not use `/delegate`: this replay stays local and does not create a PR.
+
+To open the CLI with the first read-only prompt already submitted:
+
+```bash
+copilot -i "Read docs/feature-request.md, .github/copilot-instructions.md, src/tasks.js, src/server.js, public/index.html, public/app.js and test/server.test.js. Do not edit files. Explain the current behavior, relevant invariants and a short implementation and verification plan. Stop and wait for my approval."
+```
+
+This is interactive: trust, sign-in, and tool permissions may require input.
+Do not add `--allow-all` just to avoid those decisions.
+
+### Show both without sharing edits
+
+Use separate baseline clones if you want to demonstrate both interfaces:
+
+```bash
+git clone --branch main --single-branch https://github.com/Ch0wseth/copilot-taskboard-demo.git taskboard-vscode
+git clone --branch main --single-branch https://github.com/Ch0wseth/copilot-taskboard-demo.git taskboard-cli
+git -C taskboard-vscode switch -c replay/vscode
+git -C taskboard-cli switch -c replay/cli
+```
+
+Open `taskboard-vscode` in VS Code and start `copilot` from `taskboard-cli`.
+Use a new destination name if either folder already exists. Do not run both
+agents against the same checkout. Neither agent should commit, push, or deploy.
+If you start both apps, give them different ports as described above.
+
 ## Replay the change with Copilot
 
 Use the same acceptance criteria throughout the replay. The source requirement
@@ -164,7 +231,9 @@ status parameter as the original four-task list; accept exactly one status=open 
 open tasks; return a structured 400 for blank, unknown, uppercase, or repeated
 status values. Preserve the { items, count } envelope and task order. In the UI,
 add an "Open only" native button with aria-pressed, show the response count,
-expose request errors, and allow the user to retry. Do not add dependencies,
+expose request errors, and allow the user to retry.
+Disable the button while a request is pending and commit its pressed state only
+after a successful response. Do not commit, push, publish, or deploy. Do not add dependencies,
 authentication, persistence, or unrelated features. Run npm test and stop for
 my review.
 ```
@@ -212,6 +281,22 @@ tasks API request, click the button, and then unblock the request and click
 again. The automated tests exercise HTTP behavior; they do not test the browser
 UI or its accessibility.
 
+You can ask Copilot to help with this verification using the following prompt.
+Browser automation requires an actually available browser tool, such as
+Playwright; it is not automatically available in every Copilot environment.
+
+```text
+Verify the feature against docs/feature-request.md. Run npm test and report the
+actual output. If browser automation is available, exercise four tasks -> two
+open tasks -> four restored tasks, keyboard activation with the button focused,
+the disabled pending state, and a blocked request followed by a successful
+retry. Check the network request and count/order. Restart the local server after
+backend edits: npm start does not hot reload. Use only this local synthetic app,
+not existing browser sessions or other sites. Do not install tools, modify code,
+commit, push or deploy. Report exactly what ran and what remains manual; never
+claim browser success from reading the code or passing HTTP tests alone.
+```
+
 ## Compare with the completed reference
 
 From the replay checkout, compare the two published branches:
@@ -226,6 +311,46 @@ replay, create the worktree shown above. In that worktree, run `npm test` and
 `npm start`. Expect twelve passing tests. The README and replay instructions
 are shared; the baseline and completed branches differ in application and test
 code.
+
+## Optional continuous live-demo prompt
+
+For a presenter-led run, this prompt combines the phases. Unlike the guided
+prompts above, it authorizes implementation after the agent presents its plan;
+it does **not** stop for human approval between phases. Prefer the phased
+version when you want the audience to inspect each checkpoint.
+
+Paste it into VS Code Agent or an interactive `copilot` session in a fresh
+baseline checkout:
+
+```text
+Demonstrate GitHub Copilot implementing one small feature in this baseline
+repository. Work only in this checkout. Do not commit, push, publish, deploy,
+install dependencies, or use subagents.
+
+1. Read .github/copilot-instructions.md, docs/feature-request.md, src/tasks.js,
+   src/server.js, public/index.html, public/app.js and test/server.test.js.
+   Explain the current architecture, invariants and concise plan before editing.
+2. Run the baseline HTTP tests. Add focused tests for the agreed feature only.
+   Run them before implementation and show the real failing assertions.
+3. Implement the smallest API-backed Open only filter. Add the missing native
+   button in public/index.html and wire public/app.js with aria-pressed, response
+   count, disabled pending state, visible error and retry. Commit toggle state
+   only after success. Validate before filtering in src/tasks.js. Missing status
+   returns all four tasks; exactly one status=open returns IDs 1 and 3. Blank,
+   unknown, uppercase and duplicate status values return structured 400 errors.
+   Preserve order, the unfiltered data and the { items, count } envelope.
+4. Run npm test, git diff --check and git diff --stat. Explain the meaningful
+   diff, actual results and checks not run. Do not claim browser validation
+   unless you actually performed it. Do not leave servers running. Remind me
+   to restart npm start after backend edits because there is no hot reload.
+
+Narrate context -> plan -> failing tests -> edits -> passing tests -> review.
+Do not invent results or silently skip a failure. Stop when ready for review.
+```
+
+Copilot output is nondeterministic. The reference has four baseline tests and
+twelve completed tests, but evaluate the generated assertions and behavior,
+not just whether the agent produces the same number of tests.
 
 ## Scope and troubleshooting
 
